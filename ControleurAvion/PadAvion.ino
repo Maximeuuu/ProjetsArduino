@@ -24,9 +24,20 @@ int threshold = range / 4;    // resting threshold
 int center = range / 2;       // resting position value
 
 
+// raccourci pour les touches :
+int keyUp = 0xE8;
+int keyDown = 0xE5;
+int keyLeft = 0xE4;
+int keyRight = 0xE6;
+
+
 bool controllerIsActive = false;    // bloquer ou non l'utilisation du pad
 int lastSwitchState = LOW;        // ancien etat du bouton ON/OFF
-
+// 4 etats du joystick :
+bool upIsActive = false;
+bool downIsActive = false;
+bool leftIsActive = false;
+bool rightIsActive = false;
 
 void setup() {
   Serial.begin(9600);
@@ -41,7 +52,7 @@ void setup() {
   pinMode(ledPin3, OUTPUT);           //LED pin 3
 
   Mouse.begin(); //prendre le controle de la souris
-  Keyboard.begin(); //prendre le controle du clavier ?
+  Keyboard.begin(); //prendre le controle du clavier
 }
 
 
@@ -56,6 +67,7 @@ void loop() {
       digitalWrite(ledPin, HIGH);
     }
     else {
+      Keyboard.releaseAll();
       digitalWrite(ledPin, LOW);
     }
   }
@@ -68,22 +80,64 @@ void loop() {
   int yReading = readAxis(A1);
 
 
-  // si le controlleur est active, les touches peuvent etre detectees :
+  // si le controlleur est actif, les touches peuvent etre detectees :
   if (controllerIsActive) {
+
+    //detection du joystick haut/bas
     if (xReading > 1) {
-      Keyboard.write(0xE5); //5
+      if (downIsActive==false) {
+        Keyboard.release(keyUp);
+        Keyboard.press(keyDown);
+        upIsActive=false;
+        downIsActive=true;
+      }
     }
     else if (xReading < -1) {
-      Keyboard.write(0xE8); //8
+      if (upIsActive==false) {
+        Keyboard.release(keyDown);
+        Keyboard.press(keyUp);
+        downIsActive=false;
+        upIsActive=true;
+      }
     }
+    else {
+      if (upIsActive==true or downIsActive==true){
+        Keyboard.release(keyDown);
+        Keyboard.release(keyUp);
+        downIsActive=false;
+        upIsActive=false;
+      }
+    }
+
+    //detection du joystick gauche/droite
     if (yReading > 1) {
-      Keyboard.write(0xE4); //4
+      if (leftIsActive==false) {
+        Keyboard.release(keyRight);
+        Keyboard.press(keyLeft);
+        rightIsActive=false;
+        leftIsActive=true;
+      }
     }
     else if (yReading < -1) {
-      Keyboard.write(0xE6); //6
+      if (rightIsActive==false) {
+        Keyboard.release(keyLeft);
+        Keyboard.press(keyRight);
+        leftIsActive=false;
+        rightIsActive=true;
+      }
     }
+    else {
+      if (rightIsActive==true or leftIsActive==true){
+        Keyboard.release(keyLeft);
+        Keyboard.release(keyRight);
+        leftIsActive=false;
+        rightIsActive=false;
+      }
+    }
+//faire pareil pour ces boutons
     if (digitalRead(button1) == HIGH){ // etat du bouton 1
-      Keyboard.write(101); //E
+      //Keyboard.write(101); //E
+      Keyboard.write(0xFB);
     }
     if (digitalRead(button2) == HIGH){ // etat du bouton 2
       Keyboard.write(102); //F
