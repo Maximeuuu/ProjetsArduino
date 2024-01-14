@@ -5,7 +5,6 @@
 
 // definition des pin utilises
 const int switchPin = 2;       // bouton pour allumer ou eteindre le controle du pad
-//const int mouseButton = 5;   // input pin for the mouse pushButton
 const int ledPin = 3;          // LED ON/OFF
 const int xAxis = A0;          // axe x joystick
 const int yAxis = A1;          // axe y joystick
@@ -13,20 +12,20 @@ const int button1=4;          // bouton 1
 const int button2=5;          // bouton 2
 const int button3=6;          // bouton 3
 const int button4=7;          // bouton 4
-
+const int potentiometer=A2;   // potentiometre
+const int ledPin2 = 8;        // LED potentiometre
+const int ledPin3 =9;         // LED potentiometre
 
 
 // parametres pour lire le joystick:
 int range = 12;               // output range of X or Y movement
-int responseDelay = 100;        // response delay of the mouse, in ms
+int responseDelay = 100; //0.1        // response delay of the mouse, in ms
 int threshold = range / 4;    // resting threshold
 int center = range / 2;       // resting position value
 
 
-bool mouseIsActive = false;    // bloquer ou non l'utilisation du pad
+bool controllerIsActive = false;    // bloquer ou non l'utilisation du pad
 int lastSwitchState = LOW;        // ancien etat du bouton ON/OFF
-
-
 
 
 void setup() {
@@ -38,19 +37,22 @@ void setup() {
   pinMode(button2, INPUT);           // bouton 2
   pinMode(button3, INPUT);           // bouton 3
   pinMode(button4, INPUT);           // bouton 4
+  pinMode(ledPin2, OUTPUT);          // LED pin 2
+  pinMode(ledPin3, OUTPUT);           //LED pin 3
 
   Mouse.begin(); //prendre le controle de la souris
   Keyboard.begin(); //prendre le controle du clavier ?
 }
+
 
 void loop() {
   int switchState = digitalRead(switchPin); // etat du bouton ON/OFF
 //s'il change et qu'il est HIGH alors il active le pad :
   if (switchState != lastSwitchState) {
     if (switchState == HIGH) {
-      mouseIsActive = !mouseIsActive;
+      controllerIsActive = !controllerIsActive;
     }
-    if (mouseIsActive) {
+    if (controllerIsActive) {
       digitalWrite(ledPin, HIGH);
     }
     else {
@@ -66,72 +68,54 @@ void loop() {
   int yReading = readAxis(A1);
 
 
-  // if the mouse control state is active, move the mouse:
-  if (mouseIsActive) {
+  // si le controlleur est active, les touches peuvent etre detectees :
+  if (controllerIsActive) {
     if (xReading > 1) {
-      //Serial.print("5");
-      //Serial.print("\n");
-      Keyboard.write(0xE5);
+      Keyboard.write(0xE5); //5
     }
-    if (xReading < -1) {
-      //Serial.print("8");
-      //Serial.print("\n");
-      Keyboard.write(0xE8);
+    else if (xReading < -1) {
+      Keyboard.write(0xE8); //8
     }
     if (yReading > 1) {
-      //Serial.print("4");
-      //Serial.print("\n");
-      Keyboard.write(0xE4);
+      Keyboard.write(0xE4); //4
     }
-    if (yReading < -1) {
-      //Serial.print("6");
-      //Serial.print("\n");
-      Keyboard.write(0xE6);
+    else if (yReading < -1) {
+      Keyboard.write(0xE6); //6
     }
     if (digitalRead(button1) == HIGH){ // etat du bouton 1
-      //Serial.print("E");
-      //Serial.print("\n");
-      Keyboard.write(101);
+      Keyboard.write(101); //E
     }
     if (digitalRead(button2) == HIGH){ // etat du bouton 2
-      //Serial.print("F");
-      //Serial.print("\n");
-      Keyboard.write(102);
+      Keyboard.write(102); //F
     }
     if (digitalRead(button3) == HIGH){ // etat du bouton 3
-      //Serial.print("G");
-      //Serial.print("\n");
-      Keyboard.write(103);
+      Keyboard.write(103); //G
     }
     if (digitalRead(button4) == HIGH){ // etat du bouton 4
-      //Serial.print("space");
-      //Serial.print("\n");
-      Keyboard.write(0x20);
+      Keyboard.write(0x20); //space
     }
-
 
     /*
     autres Boutons...
     */
-
-/*
-    // read the mouse button and click or not click:
-    // if the mouse button is pressed:
-    if (digitalRead(mouseButton) == HIGH) {
-      // if the mouse is not pressed, press it:
-     if (!Mouse.isPressed(MOUSE_LEFT)) {
-       Mouse.press(MOUSE_LEFT);
-     }
-    }
-    // else the mouse button is not pressed:
-   else {
-     // if the mouse is pressed, release it:
-     if (Mouse.isPressed(MOUSE_LEFT)) {
-        Mouse.release(MOUSE_LEFT);
-     }
   }
-*/
 
+  //lecture du potentiometre :
+  int time = analogRead(potentiometer);
+  if (time<240){
+    digitalWrite(ledPin2, HIGH);
+    digitalWrite(ledPin3, LOW);
+    responseDelay = 200;
+  }
+  else if (time>700){
+    digitalWrite(ledPin2, LOW);
+    digitalWrite(ledPin3, HIGH);
+    responseDelay = 1;
+  }
+  else {
+    digitalWrite(ledPin2, HIGH);
+    digitalWrite(ledPin3, HIGH);
+    responseDelay = 20;
   }
 
 
@@ -140,11 +124,10 @@ void loop() {
 
 
 
-
+//fonctions
 
 /*
-  reads an axis (0 or 1 for x or y) and scales the analog input range to a range
-  from 0 to <range>
+  reads an axis (0 or 1 for x or y) and scales the analog input range to a range from 0 to <range>
 */
 
 int readAxis(int thisAxis) {
