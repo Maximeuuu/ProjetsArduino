@@ -18,7 +18,7 @@ const int button4=7;          // bouton 4
 
 // parametres pour lire le joystick:
 int range = 12;               // output range of X or Y movement
-int responseDelay = 0.1;        // response delay of the mouse, in ms
+int responseDelay = 100;        // response delay of the mouse, in ms
 int threshold = range / 4;    // resting threshold
 int center = range / 2;       // resting position value
 
